@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import cn.tomoya.common.config.SiteConfig;
+import cn.tomoya.config.yml.SiteConfig;
 import cn.tomoya.module.user.entity.User;
 import cn.tomoya.module.user.service.UserService;
 
@@ -48,7 +48,6 @@ public class ValidateCodeAuthenticationFilter extends UsernamePasswordAuthentica
       throw new AuthenticationServiceException("不支持非POST方式的请求!");
     // 验证码验证
     String requestCaptcha = request.getParameter("code");
-    log.info(requestCaptcha);
     String genCaptcha = (String) request.getSession().getAttribute("index_code");
     log.info(genCaptcha);
     if (StringUtils.isEmpty(requestCaptcha))

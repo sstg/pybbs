@@ -1,6 +1,6 @@
 package cn.tomoya.util;
 
-import cn.tomoya.common.config.SiteConfig;
+import cn.tomoya.config.yml.SiteConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,9 +38,13 @@ public class FileUtil {
       BufferedOutputStream stream = null;
       String requestPath = null;
       if (fileUploadEnum == FileUploadEnum.FILE) {
+        File file_dir = new File(siteConfig.getUploadPath());
+        if(!file_dir.exists()) file_dir.mkdirs();
         stream = new BufferedOutputStream(new FileOutputStream(new File(siteConfig.getUploadPath() + fileName)));
         requestPath = siteConfig.getStaticUrl();
       } else if (fileUploadEnum == FileUploadEnum.AVATAR) {
+        File file_dir = new File(siteConfig.getUploadPath() + "avatar/");
+        if(!file_dir.exists()) file_dir.mkdirs();
         stream = new BufferedOutputStream(
             new FileOutputStream(new File(siteConfig.getUploadPath() + "avatar/" + fileName)));
         requestPath = siteConfig.getStaticUrl() + "avatar/";

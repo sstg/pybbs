@@ -1,36 +1,11 @@
 package cn.tomoya.module.index.controller;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Random;
-import java.util.UUID;
-
-import javax.imageio.ImageIO;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
-
-import cn.tomoya.common.BaseController;
-import cn.tomoya.common.config.SiteConfig;
+import cn.tomoya.config.base.BaseController;
+import cn.tomoya.config.yml.SiteConfig;
+import cn.tomoya.exception.ApiException;
 import cn.tomoya.exception.Result;
+import cn.tomoya.module.code.entity.CodeEnum;
+import cn.tomoya.module.code.service.CodeService;
 import cn.tomoya.module.topic.entity.Topic;
 import cn.tomoya.module.topic.service.TopicService;
 import cn.tomoya.module.user.entity.User;
@@ -38,7 +13,32 @@ import cn.tomoya.module.user.service.UserService;
 import cn.tomoya.util.FileUploadEnum;
 import cn.tomoya.util.FileUtil;
 import cn.tomoya.util.PageWrapper;
+import cn.tomoya.util.StrUtil;
 import cn.tomoya.util.identicon.Identicon;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Page;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created by tomoya.
@@ -47,6 +47,8 @@ import cn.tomoya.util.identicon.Identicon;
  */
 @Controller
 public class IndexController extends BaseController {
+
+  private Logger log = Logger.getLogger(IndexController.class);
 
   @Autowired
   private TopicService topicService;
@@ -58,6 +60,12 @@ public class IndexController extends BaseController {
   private Identicon identicon;
   @Autowired
   private FileUtil fileUtil;
+  @Autowired
+  private JavaMailSender javaMailSender;
+  @Autowired
+  private CodeService codeService;
+  @Autowired
+  private Environment env;
 
   /**
    * 首页
@@ -83,6 +91,7 @@ public class IndexController extends BaseController {
 
   /**
    * 搜索
+   *
    * @param p
    * @param q
    * @param model
@@ -131,29 +140,58 @@ public class IndexController extends BaseController {
    * @return
    */
   @PostMapping("/register")
-  public String register(String username, String password, HttpServletResponse response, Model model) {
+  public String register(String username, String password, String email, String emailCode, String code,
+                         HttpSession session, HttpServletResponse response, Model model) {
+    String genCaptcha = (String) session.getAttribute("index_code");
+    if (StringUtils.isEmpty(code)) {
+      model.addAttribute("errors", "验证码不能为空");
+      return render("/register");
+    }
+    if (!genCaptcha.toLowerCase().equals(code.toLowerCase())) {
+      model.addAttribute("errors", "验证码错误");
+      return render("/register");
+    }
     User user = userService.findByUsername(username);
     if (user != null) {
       model.addAttribute("errors", "用户名已经被注册");
-    } else if (StringUtils.isEmpty(username)) {
-      model.addAttribute("errors", "用户名不能为空");
-    } else if (StringUtils.isEmpty(password)) {
-      model.addAttribute("errors", "密码不能为空");
-    } else {
-      Date now = new Date();
-      String avatarName = UUID.randomUUID().toString();
-      identicon.generator(avatarName);
-      user = new User();
-      user.setUsername(username);
-      user.setPassword(new BCryptPasswordEncoder().encode(password));
-      user.setInTime(now);
-      user.setBlock(false);
-      user.setToken(UUID.randomUUID().toString());
-      user.setAvatar(siteConfig.getStaticUrl() + "avatar/" + avatarName + ".png");
-      userService.save(user);
-      return redirect(response, "/login?s=reg");
+      return render("/register");
     }
-    return render("/register");
+    if (StringUtils.isEmpty(username)) {
+      model.addAttribute("errors", "用户名不能为空");
+      return render("/register");
+    }
+    if (StringUtils.isEmpty(password)) {
+      model.addAttribute("errors", "密码不能为空");
+      return render("/register");
+    }
+    User user_email = userService.findByEmail(email);
+    if (user_email != null) {
+      model.addAttribute("errors", "邮箱已经被使用");
+      return render("/register");
+    }
+    int validateResult = codeService.validateCode(emailCode, CodeEnum.EMAIL);
+    if(validateResult == 1) {
+      model.addAttribute("errors", "邮箱验证码不正确");
+      return render("/register");
+    }
+    if(validateResult == 2) {
+      model.addAttribute("errors", "邮箱验证码已过期");
+      return render("/register");
+    }
+    Date now = new Date();
+    String avatarName = UUID.randomUUID().toString();
+    identicon.generator(avatarName);
+    user = new User();
+    user.setEmail(email);
+    user.setUsername(username);
+    user.setPassword(new BCryptPasswordEncoder().encode(password));
+    user.setInTime(now);
+    user.setBlock(false);
+    user.setToken(UUID.randomUUID().toString());
+    user.setAvatar(siteConfig.getStaticUrl() + "avatar/" + avatarName + ".png");
+    user.setAttempts(0);
+    userService.save(user);
+    return redirect(response, "/login?s=reg");
   }
 
   /**
@@ -199,6 +237,7 @@ public class IndexController extends BaseController {
 
   /**
    * 关于
+   *
    * @param model
    * @return
    */
@@ -214,11 +253,12 @@ public class IndexController extends BaseController {
   private int xx = 22;
   private int fontHeight = 26;
   private int codeY = 25;
-  char[] codeSequence = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U',
-      'V', 'W', 'X', 'Y', '3', '4', '5', '6', '7', '8' };
+  char[] codeSequence = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U',
+      'V', 'W', 'X', 'Y', '3', '4', '5', '6', '7', '8'};
 
   /**
    * 验证码生成
+   *
    * @param req
    * @param resp
    * @throws IOException
@@ -286,6 +326,26 @@ public class IndexController extends BaseController {
     ServletOutputStream sos = resp.getOutputStream();
     ImageIO.write(buffImg, "jpeg", sos);
     sos.close();
+  }
+
+  @GetMapping("/sendEmailCode")
+  @ResponseBody
+  public Result sendEmailCode(String email) throws ApiException {
+    if (!StrUtil.isEmail(email)) throw new ApiException("请输入正确的Email");
+    try {
+      String genCode = codeService.genEmailCode();
+      SimpleMailMessage message = new SimpleMailMessage();
+      System.out.println(env.getProperty("spring.mail.username"));
+      message.setFrom(env.getProperty("spring.mail.username"));
+      message.setTo(email);
+      message.setSubject("注册验证码 - " + siteConfig.getName());
+      message.setText("你的验证码为： " + genCode + " , 请在10分钟内使用！");
+      javaMailSender.send(message);
+      return Result.success();
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      return Result.error("邮件发送失败");
+    }
   }
 
 }

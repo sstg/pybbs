@@ -1,66 +1,83 @@
-> Instructions：Please keep the powered by Pybbs at the bottom of the page
+[quote]
+____
+使用说明：请保留页面底部的 *powered by 朋也社区*
+____
 
-**Notice: backup database before upgrading**
+== 文档
 
-[English](https://github.com/tomoya92/pybbs) | [中文](https://github.com/tomoya92/pybbs/blob/master/README_zh_CN.md)
+https://tomoya92.github.io/pybbs/
 
-## Technology stack
+== 技术栈
 
-- jdk8a
-- tomcat8
-- springboot
-- springsecurity
-- springdata
-- freemarker
-- mysql
-- bootstrap
+- JDK8
+- Spring-Boot
+- Spring-Security
+- Spring-JPA
+- Freemarker
+- MySQL
+- Bootstrap
+- Ehcache
 
-**Well, that's the spring family bucket**
+*呃，就是spring全家桶*
 
-## Features
+== 先睹为快
 
-- I18N international support
-- ehcache support
-- Compatibility(IE9+)
-- Responsive layout
-- Local sign in/ sign up
-- Use spring-boot development
-- Permission to use spring-security, based on the permissions to do URL easy configuration management
-- Spring-data operation data storage
-- Use [editor](https://github.com/lepture/editor) as markdown editor, More convenient to write, but also supports screenshots paste upload
+https://github.com/tomoya92/pybbs/wiki/%E6%88%AA%E5%9B%BE%E6%AC%A3%E8%B5%8F[传送门]
 
-## Getting Started
+== 特性
 
-- `git clone https://github.com/tomoya92/pybbs.git`
-- Modify configuration item in configuration file `src/main/resources/application.yml`
-- Create database `pybbs-springboot`
-- Run main method of `PybbsApplication.java`
-- Browser `http://localhost:8080/`
-- Default account `tomoya` `123123`
+- 社区兼容性（IE9+）
+- 页面自适应布局
+- 本地登录，注册
+- 登录时有验证码，尝试登录次数的限制
+- 使用 `Spring-Boot` 开发
+- 权限使用 `Spring-Security` ，基于url做的权限方便配置管理
+- 使用的 `Spring-JPA` 操作数据存储
+- 使用 https://github.com/lepture/editor[editor] 作为 Markdown编辑器, 书写更方便, 还支持截图粘贴上传
+- 还增加了 https://github.com/wangfupeng1988/wangEditor[wangEditor] 作为富文本编辑器
 
-## Jar package run
+== 碰到问题怎么办?
 
-- `git clone https://github.com/tomoya92/pybbs.git`
-- Modify configuration item in configuration file `src/main/resources/application.yml`
-- Create database `pybbs-springboot`
-- Run `mvn clean -Dmaven.test.skip=true` command to generate jar package, located in `target/pybbs.jar` package
-- Run `java -jar pybbs.jar` to start the service
-- Browser `http://localhost:8080/`
-- Default account `tomoya` `123123`
+1. https://tomoya92.github.io/pybbs/[文档]
+2. https://github.com/tomoya92/pybbs/issues[issues]
 
-## Pending completion
+*提问题的时候请将问题重现步骤描述清楚*
 
-- [x] Add cache（ehcache）
-- [x] I18N
-- [ ] Indexed
-- [ ] Integrated third party login（Github, QQ, Weibo）
+QQ群：`419343003`
 
-## Docker run
+== 其它版本
 
-```
-docker run --name pybbs -p 10090:8080 -v /var/pybbs/application.yml:/app/application.yml -d stiangao/pybbs
-```
+- golang版：https://github.com/tomoya92/pybbs-go
+- springboot版：https://github.com/tomoya92/pybbs
+- jfinal版：https://github.com/tomoya92/pybbs/tree/v2.3
+- ssm版：https://github.com/ehuacui/ehuacui-bbs
 
-## License
+== 贡献
+
+欢迎大家提pr
+
+== 使用者
+
+可以给我发邮件告知你的网站
+
+|===
+| 网站 | 版本
+
+| http://bbs.narutogis.com/
+| 2.3
+
+| http://www.coder.men/
+| 2.5
+
+|===
+
+== 捐赠
+
+image:https://cloud.githubusercontent.com/assets/6915570/18000010/9283d530-6bae-11e6-8c34-cd27060b9074.png[alipay]
+image:https://cloud.githubusercontent.com/assets/6915570/17999995/7c2a4db4-6bae-11e6-891c-4b6bc4f00f4b.png[wechat]
+
+https://github.com/tomoya92/pybbs/wiki/%E6%8D%90%E8%B5%A0[捐赠名单]
+
+== License
 
 MIT

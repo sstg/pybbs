@@ -10,7 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
-import cn.tomoya.common.BaseEntity;
+import cn.tomoya.config.base.BaseEntity;
 
 /**
  * Created by tomoya.
@@ -20,8 +20,6 @@ import cn.tomoya.common.BaseEntity;
 @Entity
 @Table(name = "pybbs_permission")
 public class Permission extends BaseEntity implements Serializable {
-
-  private static final long serialVersionUID = 1L;
 
   @Id
   @GeneratedValue
